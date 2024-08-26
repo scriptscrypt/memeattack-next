@@ -4,4 +4,4 @@
 
 
 ## Contributing
-Any contrihutor interested in working on this idea can start using this repo as a starting point and give relevent PRs to make it live   
+Any contributor interested in working on this idea can start using this repo as a starting point and give relevent PRs to make it live   

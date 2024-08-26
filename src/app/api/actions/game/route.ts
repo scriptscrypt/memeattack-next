@@ -104,13 +104,13 @@ export const POST = async (req: Request) => {
   const requestUrl = new URL(req.url);
   const baseHref = new URL(`/api/actions`, requestUrl.origin).toString();
 
-  // Get the 'paramRPS' parameter from the URL
-  const userChoice = requestUrl.searchParams.get("paramRPS");
+  // Get the 'paramTile' parameter from the URL
+  const userChoice = requestUrl.searchParams.get("paramTile");
   console.log(`User's choice: ${userChoice}`);
 
   // Ensure userChoice is valid
-  const validChoices = ["rock", "paper", "scissors"];
-  if (!userChoice || !validChoices.includes(userChoice)) {
+  const validChoices = Array.from({ length: 9 }, (_, i) => i + 1);
+  if (!userChoice || !validChoices.includes(Number(userChoice))) {
     return NextResponse?.json(
       {
         message: "Invalid choice. Please select rock, paper, or scissors.",
@@ -129,7 +129,7 @@ export const POST = async (req: Request) => {
 
   // Determine the result
   // const result = utilDetermineWinner(userChoice, serverChoice);
-  const result = userChoice === serverChoice ? "draw" : userChoice;
+  const result = Number(userChoice) === serverChoice ? "draw" : userChoice;
   console.log(`Game result: ${result}`);
 
   // Transaction part for SOL tx:
@@ -180,14 +180,14 @@ export const POST = async (req: Request) => {
     payload = await createPostResponse({
       fields: {
         transaction,
-        message: `You chose ${userChoice?.toUpperCase()}, the Server Blinked ${serverChoice?.toUpperCase()}. Result: ${result}`,
+        message: `You chose ${userChoice}, the Server Blinked ${serverChoice}. Result: ${result}`,
         links: {
           next: {
             action: {
               type: "completed",
               title: `Rock paper scissors #2`,
               icon: new URL("/win.png", new URL(req.url).origin).toString(),
-              description: `You chose ${userChoice?.toUpperCase()}, the Server Blinked ${serverChoice?.toUpperCase()}. Result: ${result}`,
+              description: `You chose ${userChoice}, the Server Blinked ${serverChoice}. Result: ${result}`,
               label: "Yayy",
             },
             type: "inline",
