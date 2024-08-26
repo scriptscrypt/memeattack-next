@@ -4,6 +4,7 @@ import wenLogo from "../../../assets/wen.png";
 export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
+  // Should be fed with DB data that contains state of the Game - WIP for now
   try {
     const { origin } = new URL(request.url);
     const absoluteWenLogoUrl = `${origin}${wenLogo.src}`;
