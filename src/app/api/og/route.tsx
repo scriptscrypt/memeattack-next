@@ -1,20 +1,12 @@
-import Image from "next/image";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
-
+import wenLogo from "../../../assets/wen.png";
 export const runtime = "edge";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-
-    // Get game state from query params or database
-    const gameState = {
-      tokens: [
-        { name: "WEN", amount: "1.5k", price: 87 },
-        { name: "POPCAT", amount: "1.1M", price: 66 },
-      ],
-    };
+    const { origin } = new URL(request.url);
+    const absoluteWenLogoUrl = `${origin}${wenLogo.src}`;
 
     const fnRenderBox = (boxContents: any) => {
       return (
@@ -49,8 +41,25 @@ export async function GET(request: NextRequest) {
         >
           {fnRenderBox(
             <>
-              Occupied by WEN
-              <Image alt="$WEN" src="/coins/wen.png" width={120} height={120} />{" "}
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <img
+                  alt="$WEN"
+                  src={absoluteWenLogoUrl}
+                  width={200}
+                  height={200}
+                />
+
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <div style={{ display: "flex" }}>
+                    <div style={{ display: "flex" }}>1.5k </div>
+                    <div style={{ display: "flex" }}>WEN </div>
+                  </div>
+
+                  <div style={{ display: "flex" }}> $250</div>
+                </div>
+              </div>
             </>
           )}
           {fnRenderBox(2)}
@@ -59,7 +68,9 @@ export async function GET(request: NextRequest) {
           {fnRenderBox("Occupy this box to Win 1 SOL")}
           {fnRenderBox(6)}
           {fnRenderBox(7)}
-          {fnRenderBox(8)}
+          {fnRenderBox(
+            <img alt="$WEN" src={absoluteWenLogoUrl} width={240} height={240} />
+          )}
           {fnRenderBox(9)}
         </div>
       ),

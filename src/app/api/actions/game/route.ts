@@ -5,7 +5,6 @@ import {
   createPostResponse,
   ActionGetResponse,
   ActionPostRequest,
-  ActionIdentifierError,
 } from "@solana/actions";
 import {
   clusterApiUrl,
@@ -81,11 +80,11 @@ export const GET = async (req: Request) => {
         },
         {
           label: "Defend",
-          href: `${baseHref}/game?paramUserId={paramUserId}`,
+          href: `${baseHref}/game?paramTile={paramTile}&paramFirstAction={defend}`,
         },
         {
           label: "Attack",
-          href: `${baseHref}/game?paramUserId={paramUserId}`,
+          href: `${baseHref}/game?paramTile={paramTile}&paramFirstAction={attack}`,
         },
       ],
     },
@@ -113,7 +112,7 @@ export const POST = async (req: Request) => {
   if (!userChoice || !validChoices.includes(Number(userChoice))) {
     return NextResponse?.json(
       {
-        message: "Invalid choice. Please select rock, paper, or scissors.",
+        message: "Invalid choice. Please select tiles from 1 to 9.",
       },
       {
         headers: ACTIONS_CORS_HEADERS,
