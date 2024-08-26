@@ -29,7 +29,7 @@ export const GET = async (req: Request) => {
     links: {
       actions: [
         {
-          label: "Claim",
+          label: "Next",
           href: `${baseHref}/game?paramTile={paramTile}&paramFirstAction={paramFirstAction}`,
           parameters: [
             {
@@ -76,15 +76,27 @@ export const GET = async (req: Request) => {
                 },
               ],
             },
+            {
+              type: "select",
+              name: "paramFirstAction",
+              label: "Select an Action",
+              required: true,
+              options: [
+                {
+                  label: "Defend",
+                  value: "defend",
+                },
+                {
+                  label: "Attack",
+                  value: "attack",
+                },
+                {
+                  label: "Claim",
+                  value: "claim",
+                },
+              ],
+            },
           ],
-        },
-        {
-          label: "Defend",
-          href: `${baseHref}/game?paramTile={paramTile}&paramFirstAction={defend}`,
-        },
-        {
-          label: "Attack",
-          href: `${baseHref}/game?paramTile={paramTile}&paramFirstAction={attack}`,
         },
       ],
     },
@@ -104,12 +116,10 @@ export const POST = async (req: Request) => {
   const baseHref = new URL(`/api/actions`, requestUrl.origin).toString();
 
   // Get the 'paramTile' parameter from the URL
-  const userChoice = requestUrl.searchParams.get("paramTile");
-  console.log(`User's choice: ${userChoice}`);
+  const choosenTile = requestUrl.searchParams.get("paramTile");
+  const choosenFirstAction = requestUrl.searchParams.get("paramFirstAction");
 
-  // Ensure userChoice is valid
-  const validChoices = Array.from({ length: 9 }, (_, i) => i + 1);
-  if (!userChoice || !validChoices.includes(Number(userChoice))) {
+  if (!choosenTile) {
     return NextResponse?.json(
       {
         message: "Invalid choice. Please select tiles from 1 to 9.",
@@ -120,16 +130,17 @@ export const POST = async (req: Request) => {
       }
     );
   }
-
-  // Randomly select a choice for the server
-  const serverChoice =
-    validChoices[Math.floor(Math.random() * validChoices.length)];
-  console.log(`Server's choice: ${serverChoice}`);
-
-  // Determine the result
-  // const result = utilDetermineWinner(userChoice, serverChoice);
-  const result = Number(userChoice) === serverChoice ? "draw" : userChoice;
-  console.log(`Game result: ${result}`);
+  if (!choosenFirstAction) {
+    return NextResponse?.json(
+      {
+        message: "Invalid choice. Please select an action.",
+      },
+      {
+        headers: ACTIONS_CORS_HEADERS,
+        status: 400,
+      }
+    );
+  }
 
   // Transaction part for SOL tx:
   const connection = new Connection(
@@ -175,18 +186,18 @@ export const POST = async (req: Request) => {
   // Conditional payload based on the game result
   let payload: ActionPostResponse;
 
-  if (result === "won") {
+  if (choosenFirstAction === "last") {
     payload = await createPostResponse({
       fields: {
         transaction,
-        message: `You chose ${userChoice}, the Server Blinked ${serverChoice}. Result: ${result}`,
+        message: `You chose ${choosenFirstAction}}`,
         links: {
           next: {
             action: {
               type: "completed",
               title: `Rock paper scissors #2`,
               icon: new URL("/win.png", new URL(req.url).origin).toString(),
-              description: `You chose ${userChoice}, the Server Blinked ${serverChoice}. Result: ${result}`,
+              description: `You chose ${choosenFirstAction}}`,
               label: "Yayy",
             },
             type: "inline",
@@ -194,44 +205,50 @@ export const POST = async (req: Request) => {
         },
       },
     });
-  } else {
+  } else if (choosenFirstAction === "attack") {
     payload = await createPostResponse({
       fields: {
         transaction,
-        message: "Rock paper scissors",
+        message: "Action Successful, Next steps in the Linked Blink",
         links: {
           next: {
             action: {
               type: "action",
-              title: `Rock paper scissors`,
-              icon: new URL("/initial.png", new URL(req.url).origin).toString(),
-              description: `\nPlay Rock Paper Scissors, You've got another chance! to Win Big!`,
-              label: "Select Action",
+              title: `Let's Play! Choose your Attack`,
+              icon: new URL("/api/og", new URL(req.url).origin).toString(),
+              description: `\Select a memecoin and an amount`,
+              label: "Confirm",
               links: {
                 actions: [
                   {
-                    label: "Rock paper scissors",
-                    href: `${baseHref}/rps?paramRPS={paramRPS}`,
+                    label: "Attack",
+                    href: `${baseHref}/game?paramAmount={paramAmount}&paramMemecoin={paramMemecoin}`,
                     parameters: [
                       {
-                        type: "radio",
-                        name: "paramRPS",
-                        label: "Rock? paper? scissors?",
+                        type: "select",
+                        name: "paramMemecoin",
+                        label: "Select an memecoin",
                         required: true,
                         options: [
                           {
-                            label: "Rock",
-                            value: "rock",
+                            label: "X",
+                            value: "x",
                           },
                           {
-                            label: "Paper",
-                            value: "paper",
+                            label: "Y",
+                            value: "y",
                           },
                           {
-                            label: "Scissors",
-                            value: "scissors",
+                            label: "Z",
+                            value: "z",
                           },
                         ],
+                      },
+                      {
+                        type: "text",
+                        name: "paramAmount",
+                        label: "Enter an amount",
+                        required: true,
                       },
                     ],
                   },
@@ -244,10 +261,141 @@ export const POST = async (req: Request) => {
         },
       },
     });
-  }
-  console.log("Post response payload:", payload);
+  } else if (choosenFirstAction === "defend") {
+    payload = await createPostResponse({
+      fields: {
+        transaction,
+        message: "Action Successful, Next steps in the Linked Blink",
+        links: {
+          next: {
+            action: {
+              type: "action",
+              title: `Let's Play! Choose your Defense`,
+              icon: new URL("/api/og", new URL(req.url).origin).toString(),
+              description: `\Select a memecoin and an amount`,
+              label: "Confirm",
+              links: {
+                actions: [
+                  {
+                    label: "Defend",
+                    href: `${baseHref}/game?paramAmount={paramAmount}&paramMemecoin={paramMemecoin}`,
+                    parameters: [
+                      {
+                        type: "select",
+                        name: "paramMemecoin",
+                        label: "Select an memecoin",
+                        required: true,
+                        options: [
+                          {
+                            label: "X",
+                            value: "x",
+                          },
+                          {
+                            label: "Y",
+                            value: "y",
+                          },
+                          {
+                            label: "Z",
+                            value: "z",
+                          },
+                        ],
+                      },
+                      {
+                        type: "text",
+                        name: "paramAmount",
+                        label: "Enter an amount",
+                        required: true,
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
 
-  return Response.json(payload, {
-    headers: ACTIONS_CORS_HEADERS,
-  });
+            type: "inline",
+          },
+        },
+      },
+    });
+
+    console.log("Post response payload:", payload);
+
+    return Response.json(payload, {
+      headers: ACTIONS_CORS_HEADERS,
+    });
+  } else if (choosenFirstAction === "claim") {
+    payload = await createPostResponse({
+      fields: {
+        transaction,
+        message: "Action Successful, Next steps in the Linked Blink",
+        links: {
+          next: {
+            action: {
+              type: "action",
+              title: `Let's Play! Choose your Defense`,
+              icon: new URL("/api/og", new URL(req.url).origin).toString(),
+              description: `\Select a memecoin and an amount`,
+              label: "Confirm",
+              links: {
+                actions: [
+                  {
+                    label: "Claim",
+                    href: `${baseHref}/game?paramAmount={paramAmount}&paramTile={paramTile}`,
+                    parameters: [
+                      {
+                        type: "select",
+                        name: "paramTile",
+                        label: "Select the Tile",
+                        required: true,
+                        options: [
+                          {
+                            label: "1",
+                            value: "1",
+                          },
+                          {
+                            label: "2",
+                            value: "2",
+                          },
+                          {
+                            label: "3",
+                            value: "3",
+                          },
+                          {
+                            label: "4",
+                            value: "4",
+                          },
+                          {
+                            label: "5",
+                            value: "5",
+                          },
+                          {
+                            label: "6",
+                            value: "6",
+                          },
+                        ],
+                      },
+                      {
+                        type: "text",
+                        name: "paramAmount",
+                        label: "Enter an amount",
+                        required: true,
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+
+            type: "inline",
+          },
+        },
+      },
+    });
+
+    console.log("Post response payload:", payload);
+
+    return Response.json(payload, {
+      headers: ACTIONS_CORS_HEADERS,
+    });
+  }
 };
