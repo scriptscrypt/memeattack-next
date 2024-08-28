@@ -25,57 +25,13 @@ export const GET = async (req: Request) => {
     title: `MemeAttack`,
     icon: new URL("/api/og", new URL(req.url).origin).toString(),
     description: `\n Choose your Tile and Action`,
-    label: "Enter your Telegram userId",
+    label: "Next",
     links: {
       actions: [
         {
           label: "Next",
-          href: `${baseHref}/game?paramTile={paramTile}&paramFirstAction={paramFirstAction}`,
+          href: `${baseHref}/game?paramFirstAction={paramFirstAction}`,
           parameters: [
-            {
-              type: "select",
-              name: "paramTile",
-              label: "Select a Tile",
-              required: true,
-              options: [
-                {
-                  label: "1",
-                  value: "1",
-                },
-                {
-                  label: "2",
-                  value: "2",
-                },
-                {
-                  label: "3",
-                  value: "3",
-                },
-                {
-                  label: "4",
-                  value: "4",
-                },
-                {
-                  label: "5",
-                  value: "5",
-                },
-                {
-                  label: "6",
-                  value: "6",
-                },
-                {
-                  label: "7",
-                  value: "7",
-                },
-                {
-                  label: "8",
-                  value: "8",
-                },
-                {
-                  label: "9",
-                  value: "9",
-                },
-              ],
-            },
             {
               type: "select",
               name: "paramFirstAction",
@@ -119,28 +75,28 @@ export const POST = async (req: Request) => {
   const choosenTile = requestUrl.searchParams.get("paramTile");
   const choosenFirstAction = requestUrl.searchParams.get("paramFirstAction");
 
-  if (!choosenTile) {
-    return NextResponse?.json(
-      {
-        message: "Invalid choice. Please select tiles from 1 to 9.",
-      },
-      {
-        headers: ACTIONS_CORS_HEADERS,
-        status: 400,
-      }
-    );
-  }
-  if (!choosenFirstAction) {
-    return NextResponse?.json(
-      {
-        message: "Invalid choice. Please select an action.",
-      },
-      {
-        headers: ACTIONS_CORS_HEADERS,
-        status: 400,
-      }
-    );
-  }
+  // if (!choosenTile) {
+  //   return NextResponse?.json(
+  //     {
+  //       message: "Invalid choice. Please select tiles from 1 to 9.",
+  //     },
+  //     {
+  //       headers: ACTIONS_CORS_HEADERS,
+  //       status: 400,
+  //     }
+  //   );
+  // }
+  // if (!choosenFirstAction) {
+  //   return NextResponse?.json(
+  //     {
+  //       message: "Invalid choice. Please select an action.",
+  //     },
+  //     {
+  //       headers: ACTIONS_CORS_HEADERS,
+  //       status: 400,
+  //     }
+  //   );
+  // }
 
   // Transaction part for SOL tx:
   const connection = new Connection(
@@ -226,6 +182,50 @@ export const POST = async (req: Request) => {
                     parameters: [
                       {
                         type: "select",
+                        name: "paramTile",
+                        label: "Select a Tiles",
+                        required: true,
+                        options: [
+                          {
+                            label: "1",
+                            value: "1",
+                          },
+                          {
+                            label: "2",
+                            value: "2",
+                          },
+                          {
+                            label: "3",
+                            value: "3",
+                          },
+                          {
+                            label: "4",
+                            value: "4",
+                          },
+                          {
+                            label: "5",
+                            value: "5",
+                          },
+                          {
+                            label: "6",
+                            value: "6",
+                          },
+                          {
+                            label: "7",
+                            value: "7",
+                          },
+                          {
+                            label: "8",
+                            value: "8",
+                          },
+                          {
+                            label: "9",
+                            value: "9",
+                          },
+                        ],
+                      },
+                      {
+                        type: "select",
                         name: "paramMemecoin",
                         label: "Select an memecoin",
                         required: true,
@@ -261,6 +261,12 @@ export const POST = async (req: Request) => {
         },
       },
     });
+
+    console.log("Post response payload:", payload);
+
+    return Response.json(payload, {
+      headers: ACTIONS_CORS_HEADERS,
+    });
   } else if (choosenFirstAction === "defend") {
     payload = await createPostResponse({
       fields: {
@@ -278,8 +284,52 @@ export const POST = async (req: Request) => {
                 actions: [
                   {
                     label: "Defend",
-                    href: `${baseHref}/game?paramAmount={paramAmount}&paramMemecoin={paramMemecoin}`,
+                    href: `${baseHref}/game?paramAmount={paramAmount}&paramMemecoin={paramMemecoin}&paramFirstAction={last}`,
                     parameters: [
+                      {
+                        type: "select",
+                        name: "paramTile",
+                        label: "Select a Tiles",
+                        required: true,
+                        options: [
+                          {
+                            label: "1",
+                            value: "1",
+                          },
+                          {
+                            label: "2",
+                            value: "2",
+                          },
+                          {
+                            label: "3",
+                            value: "3",
+                          },
+                          {
+                            label: "4",
+                            value: "4",
+                          },
+                          {
+                            label: "5",
+                            value: "5",
+                          },
+                          {
+                            label: "6",
+                            value: "6",
+                          },
+                          {
+                            label: "7",
+                            value: "7",
+                          },
+                          {
+                            label: "8",
+                            value: "8",
+                          },
+                          {
+                            label: "9",
+                            value: "9",
+                          },
+                        ],
+                      },
                       {
                         type: "select",
                         name: "paramMemecoin",
@@ -340,7 +390,7 @@ export const POST = async (req: Request) => {
                 actions: [
                   {
                     label: "Claim",
-                    href: `${baseHref}/game?paramAmount={paramAmount}&paramTile={paramTile}`,
+                    href: `${baseHref}/game?paramAmount={paramAmount}&paramTile={paramTile}&paramFirstAction={last}`,
                     parameters: [
                       {
                         type: "select",
@@ -371,6 +421,18 @@ export const POST = async (req: Request) => {
                           {
                             label: "6",
                             value: "6",
+                          },
+                          {
+                            label: "7",
+                            value: "7",
+                          },
+                          {
+                            label: "8",
+                            value: "8",
+                          },
+                          {
+                            label: "9",
+                            value: "9",
                           },
                         ],
                       },
