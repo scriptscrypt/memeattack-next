@@ -1,5 +1,9 @@
 import { envEnviroment } from "@/lib/envConfig/envConfig";
 import {
+  createEnterGameInstruction,
+  PROGRAM_ID,
+} from "@/lib/program/programInstructions";
+import {
   ActionPostResponse,
   ACTIONS_CORS_HEADERS,
   createPostResponse,
@@ -9,10 +13,12 @@ import {
 import {
   clusterApiUrl,
   Connection,
+  Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { NextResponse } from "next/server";
 
@@ -71,72 +77,33 @@ export const POST = async (req: Request) => {
   const requestUrl = new URL(req.url);
   const baseHref = new URL(`/api/actions`, requestUrl.origin).toString();
 
-  // Get the 'paramTile' parameter from the URL
   const choosenTile = requestUrl.searchParams.get("paramTile");
   const choosenFirstAction = requestUrl.searchParams.get("paramFirstAction");
+  const choosenMemecoin = requestUrl.searchParams.get("paramMemecoin");
+  const amount = parseFloat(requestUrl.searchParams.get("paramAmount") || "0");
 
-  // if (!choosenTile) {
-  //   return NextResponse?.json(
-  //     {
-  //       message: "Invalid choice. Please select tiles from 1 to 9.",
-  //     },
-  //     {
-  //       headers: ACTIONS_CORS_HEADERS,
-  //       status: 400,
-  //     }
-  //   );
-  // }
-  // if (!choosenFirstAction) {
-  //   return NextResponse?.json(
-  //     {
-  //       message: "Invalid choice. Please select an action.",
-  //     },
-  //     {
-  //       headers: ACTIONS_CORS_HEADERS,
-  //       status: 400,
-  //     }
-  //   );
-  // }
-
-  // Transaction part for SOL tx:
   const connection = new Connection(
     process.env.SOLANA_RPC! ||
       clusterApiUrl(envEnviroment === "production" ? "mainnet-beta" : "devnet")
   );
-  console.log("Connection established with Solana network");
 
-  // Get recent blockhash
-  const transaction = new Transaction();
-  console.log("Transaction object created");
-
-  // Set the end user as the fee payer
   const body: ActionPostRequest = await req.json();
-  console.log("Request body:", body);
-
   const account = new PublicKey(body.account);
-  console.log(`Account public key:`, account.toBase58());
 
-  // Create transaction
-  transaction.add(
-    SystemProgram.transfer({
-      fromPubkey: account,
-      toPubkey: account,
-      lamports: 0.0001 * LAMPORTS_PER_SOL,
-    })
+  // Derive the game state account (you may need to adjust this based on your program's logic)
+  const [gameState] = PublicKey.findProgramAddressSync(
+    [Buffer.from("game_state")],
+    PROGRAM_ID
   );
 
-  transaction.add(
-    SystemProgram.transfer({
-      fromPubkey: account,
-      toPubkey: new PublicKey("39G4S57hEMsbD1npzi22heiEvjAHnnTG3ixciDHozcNj"),
-      lamports: 0.0001 * LAMPORTS_PER_SOL,
-    })
-  );
+  console.log("gameState: ", gameState.toBase58());
+  let transaction = new Transaction();
 
   transaction.feePayer = account;
   transaction.recentBlockhash = (
     await connection.getLatestBlockhash()
   ).blockhash;
+
   console.log("Set fee payer and recent blockhash");
 
   // Conditional payload based on the game result
@@ -162,6 +129,20 @@ export const POST = async (req: Request) => {
       },
     });
   } else if (choosenFirstAction === "attack") {
+
+    // Call the enter_game instruction from the program
+    const boxNumber = parseInt(choosenTile!) - 1; // Assuming tiles are 1-9
+    const amountInLamports = Math.floor(amount * LAMPORTS_PER_SOL);
+
+    const enterGameInstruction = createEnterGameInstruction(
+      gameState,
+      account,
+      choosenMemecoin!,
+      amountInLamports,
+      boxNumber
+    );
+
+    transaction.add(enterGameInstruction);
     payload = await createPostResponse({
       fields: {
         transaction,
@@ -178,12 +159,12 @@ export const POST = async (req: Request) => {
                 actions: [
                   {
                     label: "Attack",
-                    href: `${baseHref}/game?paramAmount={paramAmount}&paramMemecoin={paramMemecoin}`,
+                    href: `${baseHref}/game?paramAmount={paramAmount}&paramMemecoin={paramMemecoin}&paramTile={paramTile}&paramFirstAction=last`,
                     parameters: [
                       {
                         type: "select",
                         name: "paramTile",
-                        label: "Select a Tiles",
+                        label: "Select a Tile",
                         required: true,
                         options: [
                           {
@@ -231,23 +212,59 @@ export const POST = async (req: Request) => {
                         required: true,
                         options: [
                           {
-                            label: "X",
-                            value: "x",
+                            label: "Dogwifihat",
+                            value: "wif",
                           },
                           {
-                            label: "Y",
-                            value: "y",
+                            label: "Bonk",
+                            value: "bonk",
                           },
                           {
-                            label: "Z",
-                            value: "z",
+                            label: "Popcat",
+                            value: "popcat",
+                          },
+                          {
+                            label: "Book of Meme",
+                            value: "bome",
+                          },
+                          {
+                            label: "Cats in a dogs world",
+                            value: "mew",
+                          },
+                          {
+                            label: "Gigachad",
+                            value: "giga",
+                          },
+                          {
+                            label: "Ponke",
+                            value: "ponke",
+                          },
+                          {
+                            label: "Mumu the bull",
+                            value: "Mumu",
+                          },
+                          {
+                            label: "Slerf",
+                            value: "slerf",
+                          },
+                          {
+                            label: "Fwog",
+                            value: "fwog",
+                          },
+                          {
+                            label: "Myro",
+                            value: "myro",
+                          },
+                          {
+                            label: "Wen",
+                            value: "wen",
                           },
                         ],
                       },
                       {
                         type: "text",
                         name: "paramAmount",
-                        label: "Enter an amount",
+                        label: "Enter the amount",
                         required: true,
                       },
                     ],
@@ -255,7 +272,6 @@ export const POST = async (req: Request) => {
                 ],
               },
             },
-
             type: "inline",
           },
         },
